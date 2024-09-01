@@ -1,3 +1,5 @@
+*assignments*.csv
+outputs/.DS_Store
 .DS_Store
 service_credentials.json
 credentials.json

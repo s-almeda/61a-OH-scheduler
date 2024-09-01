@@ -4,19 +4,18 @@ import utils
 import State
 import os, sys
 import numpy as np
-
-import shutil
-from datetime import timedelta
-import re
-
-
+# from datetime import timedelta
+# #from google.cloud import storage
 from google.api_core.exceptions import Forbidden, NotFound
 import validation
 import algorithm
 import pandas as pd
 
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
+# The range of both spreadsheet. This should not change unless the forms/the demand spreadsheet has been edited.
+
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
 
 # Function to get user approval for the google sheets links
 def get_user_approval(label, link):
@@ -32,12 +31,27 @@ def get_user_approval(label, link):
 
 
 def main():
-
     print("\n\033[1m[---- Welcome to the Office Hours Scheduler! ---- ]\033[0m\n")
 
+    # Ask the user to select the class
+    print("Please select the class you're scheduling for:")
+    print("[1] CS61A")
+    print("[2] DATAC88C")
+
+    choice = input("Enter your choice (1 or 2): ").strip()
+
+    # Determine the correct config file based on the user's choice
+    if choice == '1':
+        config_file = "61a_config.json"
+    elif choice == '2':
+        config_file = "88c_config.json"
+    else:
+        print("Invalid choice. Please restart and choose 1 for 61A or 2 for 88C.")
+        return
+    
 
     # Step 1: Read the config file
-    config = config_read.read_config("config.json")
+    config = config_read.read_config(config_file)
     
     # Step 2: Print links and ranges for user approval
     print("\033[1m[ ---- Current Settings: ---- ]\033[0m\n")
@@ -110,17 +124,16 @@ def main():
 
     state.set_assignments(assignments)
 
-    print()
     # Create CSV export of the next week's assignments
-    export_dict = {"email": [], "hours_assigned": []}
+    export_dict = {"email": [], "sum_assignments": []}
     for i in range(assignments.shape[0]):
         if assignments[i].sum() != 0:
 
             export_dict['email'].append(state.bi_mappings.inverse[i])
-            export_dict['hours_assigned'].append(assignments[i].sum())
+            export_dict['sum_assignments'].append(assignments[i].sum())
 
     export_df = pd.DataFrame(data=export_dict)
-    export_df.to_csv(f"outputs/hours_assigned_week{week_num}.csv", index=False)
+    export_df.to_csv(f"outputs/sum_assignments_week{week_num}.csv", index=False)
     
 
     # Create a dictionary to store the data for the detailed CSV
@@ -165,6 +178,8 @@ def main():
     state.serialize() #save the current state as a pickle
     print("\n\033[1m[ ---- Done! ---- ]\033[0m\n") 
     print("Check the outputs folder for the results.")
+
+
 
 if __name__ == '__main__':
     main()
