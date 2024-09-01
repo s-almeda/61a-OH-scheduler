@@ -133,7 +133,7 @@ def main():
             export_dict['sum_assignments'].append(assignments[i].sum())
 
     export_df = pd.DataFrame(data=export_dict)
-    export_df.to_csv(f"outputs/sum_assignments_week{week_num}.csv", index=False)
+    export_df.to_csv(f"outputs/{config['class']}sum_assignments_week{week_num}.csv", index=False)
     
 
     # Create a dictionary to store the data for the detailed CSV
@@ -157,7 +157,7 @@ def main():
 
     # Create a DataFrame from the dictionary and export it as a CSV
     export_df_weekly = pd.DataFrame(data=export_dict_weekly, index=hours_of_day)
-    export_df_weekly.to_csv(f"outputs/weekly_assignments/assignments_week{state.week_num}.csv", index=True, index_label="Hour")
+    export_df_weekly.to_csv(f"outputs/weekly_assignments/{config['class']}assignments_week{state.week_num}.csv", index=True, index_label="Hour")
 
     # Validate algorithm output TODO
 
