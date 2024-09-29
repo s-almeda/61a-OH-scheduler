@@ -89,10 +89,13 @@ def main():
 
     # Step 5: Validate the entire config
     validation.validate_config(config)
+    run_scheduler(config, demand, availabilities)
+
+def run_scheduler(config, demand, availabilities):
     # Step 5: Prompt user to enter the current week
     while True:
         try:
-            week_num = int(input("Enter the current week number you'd like to run the algo on.\n(e.g., enter 5 to schedule for week 5 of the semester): ").strip())
+            week_num = int(input("Enter the week number you'd like to run the algo on.\n(e.g., enter 5 to schedule for week 5 of the semester): ").strip())
             if week_num <= 0:
                 raise ValueError
             latest_week = week_num - 1
@@ -101,8 +104,9 @@ def main():
             print("Invalid input, please enter a positive integer for the week number.")
 
 
+
     if (latest_week- config["weeks_skipped"]) > 0:
-         print("found state for previous week: ", latest_week)
+         print("looking for state for previous week: ", latest_week)
          last_state = utils.deserialize(latest_week, config["weeks_skipped"])
     else:
         last_state = None
@@ -174,11 +178,15 @@ def main():
 
     # Ask for user approval to go to schedule calendar events
     approval = input("\n\033[1mDo you want to send Google Calendar events? (y/n): \033[0m").strip().lower()
-    if approval != 'y':
-        print("Ok! Good-bye.")
-        sys.exit(1)
-    else:
+    if approval == 'y':
         calendar_events_from_csv(config, week_num)
+    # Ask for user approval to run scheduler again
+    approval = input("\n\033[1mDo you want to schedule another week? (y/n): \033[0m").strip().lower()
+    if approval == 'y':
+        run_scheduler(config, demand, availabilities)
+    else:
+        "ok byeee!!"
+        sys.exit(0)
 
 
 def calendar_events_from_csv(config, week_num):
@@ -222,7 +230,7 @@ def calendar_events_from_csv(config, week_num):
 
     # ---- Check 1: Double-check with the user that this all looks correct ... ---#
     # Get the start and end dates of all assignments so we can check we're doing this for the correct week
-    start_date = datetime.strptime(assignments[0]['start_time'], '%Y-%m-%dT%H:%M') if num_assignments > 0 else None
+    start_date = min((datetime.strptime(a['start_time'], '%Y-%m-%dT%H:%M') for a in assignments if a['attendees']), default=None)
     end_date = datetime.strptime(assignments[-1]['end_time'], '%Y-%m-%dT%H:%M') if num_assignments > 0 else None
     
     # Get unique TA emails and a list of TAs 
@@ -289,8 +297,8 @@ def calendar_events_from_csv(config, week_num):
             continue
 
         # Convert start and end times to the required format: YYYY-MM-DDTHH:MM:SS.MMMZ
-        start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%dT%H:%M:00.000Z")
-        end_time = datetime.strptime(end_time, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%dT%H:%M:00.000Z")
+        start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%dT%H:%M:00-07:00")
+        end_time = datetime.strptime(end_time, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%dT%H:%M:00-07:00")
         
         # Set up event details
         summary = config['calendar_event_name']
@@ -365,7 +373,7 @@ def parse_assignments_from_csv(csv_name, config, week_num):
     
     # Parse the start date of the semester and calculate the start date for the given week
     start_date = datetime.strptime(config["start_date"], "%Y-%m-%d")
-    monday_of_week = start_date + timedelta(weeks=week_num - 1)
+    monday_of_week = start_date + timedelta(weeks=week_num - 1 - int(config["weeks_skipped"])) 
     
     # Map column headers (days of the week) to their corresponding date for this week
     days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]

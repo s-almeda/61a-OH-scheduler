@@ -73,6 +73,7 @@ def create_event(service, calendar_id, summary, location, description, start_tim
         Dictionary of event reminders to be added.
     """
     
+    
     event = {
         'summary': summary,
         'location': location,
@@ -93,7 +94,7 @@ def create_event(service, calendar_id, summary, location, description, start_tim
         event_result = service.events().insert(
             calendarId=calendar_id, 
             body=event,
-            sendUpdates='all'  # Send email invitations to attendees
+            #sendUpdates='all'  # Send email invitations to attendees
         ).execute()
         
         print(f"Event created at {start_time}: {event_result.get('htmlLink')}")
