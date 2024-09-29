@@ -122,6 +122,10 @@ follow the instructions on screen, and eventually it starts running the optimiza
 it does this for like 5 minutes, and then when it's done it puts a CSV into the 
 `outputs/weekly_assignments/` folder.
 
+** Update 09/28/2024 **
+Now it can take any of the weekly_assignments CSVs and create a bunch of calendar events + send invites!! 
+It will create the events on the CS61A SPA account calendar
+
 
 
 NOTE: It seems that previously, this code would save the state into a 'pickle' file and put that in a Google Cloud storage bucket. I changed this to a local folder inside outputs/ called "pickles" because I don't want to set up google cloud storage for like, 16 small files lol 
