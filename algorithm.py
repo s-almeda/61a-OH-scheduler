@@ -14,7 +14,7 @@ U_3_1 = 400
 U_3_2 = 50
 U_3_3 = 700
 U_3_4 = 50
-U_3_5 = 100
+U_3_5 = 30
 
 # Weight fxn used in term 3.5 (consistent weekly hours)
 lambda_func = lambda x: np.exp(-0.2 * x)
@@ -237,7 +237,7 @@ def run_algorithm(inputs):
     start = perf_counter()
     prob = Problem(obj, constraints)
 
-    prob.solve(verbose=False)
+    prob.solve(verbose=True)
 
     # Stop the spinner
     done = True

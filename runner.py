@@ -46,7 +46,7 @@ def main():
     # Which functionality?
     print("\033[1m [ Do you want to run the OH scheduler (generate CSV file) or send calendar events?: ]\033[0m")
     print("[1] Run the OH scheduler (generate CSV file)")
-    print("[2] Schedule calendar events (send invite emails based on CSV file)")
+    print("[2] Send calendar events (CSV file to calendar event invites)")
     choice = input("Enter your choice (1 or 2): ").strip()
     # Determine the correct config file based on the user's choice
     if choice == '2':
@@ -89,9 +89,11 @@ def main():
 
     # Step 5: Validate the entire config
     validation.validate_config(config)
+
     run_scheduler(config, demand, availabilities)
 
 def run_scheduler(config, demand, availabilities):
+
     # Step 5: Prompt user to enter the current week
     while True:
         try:
@@ -231,7 +233,7 @@ def calendar_events_from_csv(config, week_num):
     # ---- Check 1: Double-check with the user that this all looks correct ... ---#
     # Get the start and end dates of all assignments so we can check we're doing this for the correct week
     start_date = min((datetime.strptime(a['start_time'], '%Y-%m-%dT%H:%M') for a in assignments if a['attendees']), default=None)
-    end_date = datetime.strptime(assignments[-1]['end_time'], '%Y-%m-%dT%H:%M') if num_assignments > 0 else None
+    end_date =  max((datetime.strptime(a['end_time'], '%Y-%m-%dT%H:%M') for a in assignments if a['attendees']), default=None)
     
     # Get unique TA emails and a list of TAs 
     all_tas = set()
@@ -373,7 +375,9 @@ def parse_assignments_from_csv(csv_name, config, week_num):
     
     # Parse the start date of the semester and calculate the start date for the given week
     start_date = datetime.strptime(config["start_date"], "%Y-%m-%d")
-    monday_of_week = start_date + timedelta(weeks=week_num - 1 - int(config["weeks_skipped"])) 
+
+    monday_of_week = start_date + timedelta(weeks=week_num - 1-int(config["weeks_skipped"]))
+
     
     # Map column headers (days of the week) to their corresponding date for this week
     days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
