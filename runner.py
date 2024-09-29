@@ -109,7 +109,7 @@ def run_scheduler(config, demand, availabilities):
 
     if (latest_week- config["weeks_skipped"]) > 0:
          print("looking for state for previous week: ", latest_week)
-         last_state = utils.deserialize(latest_week, config["weeks_skipped"])
+         last_state = utils.deserialize(latest_week, config["weeks_skipped"], folder_path=f'outputs/pickles/{config["class"]}')
     else:
         last_state = None
     
@@ -173,7 +173,7 @@ def run_scheduler(config, demand, availabilities):
     export_df_weekly = pd.DataFrame(data=export_dict_weekly, index=hours_of_day)
     export_df_weekly.to_csv(f"outputs/weekly_assignments/{config['class']}assignments_week{week_num}.csv", index=True, index_label="Hour")
 
-    state.serialize() #save the current state as a pickle
+    state.serialize(folder_path=f'outputs/pickles/{config["class"]}') #save the current state as a pickle in appropriate folder
     print("\n\033[1m[ ---- Done! ---- ]\033[0m\n") 
     print(f"Saved as 'outputs/weekly_assignments/{config['class']}assignments_week{week_num}.csv'")
 

@@ -14,7 +14,7 @@ U_3_1 = 400
 U_3_2 = 50
 U_3_3 = 700
 U_3_4 = 50
-U_3_5 = 30
+U_3_5 = 50
 
 # Weight fxn used in term 3.5 (consistent weekly hours)
 lambda_func = lambda x: np.exp(-0.2 * x)
