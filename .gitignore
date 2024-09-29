@@ -4,6 +4,7 @@ outputs/.DS_Store
 .DS_Store
 service_credentials.json
 credentials.json
+oauth_credentials.json
 token.json
 __pycache__
 states

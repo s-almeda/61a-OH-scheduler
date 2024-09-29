@@ -1,7 +1,7 @@
 {
     "demand_link": "https://docs.google.com/spreadsheets/d/1rN8nm1DCym5SC4jF2zm45PNjviF-SheD_H-O2fJCIHE/edit?usp=sharing",
     "availabilities_link": "https://docs.google.com/spreadsheets/d/16SRXLX9pYrXKAuA417uxzVPPIYKRv3gfGa2HK4ymPZc/edit?usp=sharing",
-    "AVAILABILITIES_RANGE": "C88C!B1:BQ",
+    "AVAILABILITIES_RANGE": "C88C UCS1s!B1:BQ",
     "DEMAND_RANGE": "Demand!A2:E",
     "project_id": "cs-61a-website",
     "bucket_name": "oh-scheduler",
@@ -13,5 +13,6 @@
     "weeks_skipped": 1,
     "calendar_event_name": "DATAC88C OH",
     "calendar_event_location": "Warren 101b",
-    "calendar_event_description": "Office hours"
+    "calendar_event_description": "Office hours",
+    "calendar_id": "c_dd1b34e8fe66665adaa898825ba2ce784febefadbcd53c4a45d369c3628147b1@group.calendar.google.com"
 }

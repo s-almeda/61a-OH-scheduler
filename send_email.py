@@ -1,3 +1,4 @@
+# DEPRECATED by Shm. See "calendar_time.py" for the equivalent functionality instead.
 import datetime
 import numpy as np
 from googleapiclient.discovery import build
@@ -14,6 +15,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "credentials.json"
+
 SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 def send_invites(email, np_array, start_date, calendar_name, calendar_location, calendar_description):
@@ -21,29 +24,29 @@ def send_invites(email, np_array, start_date, calendar_name, calendar_location, 
     if start_date.weekday() != 0:
         start_date = start_date + relativedelta(weekday=MO)
 
-    # creds = service_account.Credentials.from_service_account_file(
-    #     "credentials.json", scopes=SCOPES
-    # )
+    creds = service_account.Credentials.from_service_account_file(
+        "credentials.json", scopes=SCOPES
+    )
 
     # service = build('calendar', 'v3', credentials=creds)
 
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                'local_oauth_secret_SPA.json', SCOPES)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
+    # #creds = None
+    # # The file token.json stores the user's access and refresh tokens, and is
+    # # created automatically when the authorization flow completes for the first
+    # # time.
+    # if os.path.exists('token.json'):
+    #     creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    # # If there are no (valid) credentials available, let the user log in.
+    # if not creds or not creds.valid:
+    #     if creds and creds.expired and creds.refresh_token:
+    #         creds.refresh(Request())
+    #     else:
+    #         flow = InstalledAppFlow.from_client_secrets_file(
+    #             'local_oauth_secret_SPA.json', SCOPES)
+    #         creds = flow.run_local_server(port=0)
+    #     # Save the credentials for the next run
+    #     with open('token.json', 'w') as token:
+    #         token.write(creds.to_json())
     
     service = build('calendar', 'v3', credentials=creds)
 
@@ -92,6 +95,8 @@ if __name__ == "__main__":
     timeslots[1][1] = 1
     timeslots[1][2] = 1
 
-    monday_date = utils.nearest_future_monday('2024-01-21')
+    monday_date = utils.nearest_future_monday('2024-09-30')
     print(timeslots)
-    send_invites('kevin.x.han@berkeley.edu', timeslots, monday_date, "OH time", "warren", "damn I love this OH")
+    send_invites('shm.almeda@berkeley.edu', timeslots, monday_date, "OH time", "warren", "damn I love this OH")
+
+
