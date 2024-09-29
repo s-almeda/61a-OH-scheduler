@@ -165,11 +165,11 @@ def main():
 
     # Create a DataFrame from the dictionary and export it as a CSV
     export_df_weekly = pd.DataFrame(data=export_dict_weekly, index=hours_of_day)
-    export_df_weekly.to_csv(f"outputs/weekly_assignments/{config['class']}assignments_week{state.week_num}.csv", index=True, index_label="Hour")
+    export_df_weekly.to_csv(f"outputs/weekly_assignments/{config['class']}assignments_week{week_num}.csv", index=True, index_label="Hour")
 
     state.serialize() #save the current state as a pickle
     print("\n\033[1m[ ---- Done! ---- ]\033[0m\n") 
-    print("Check the outputs folder for the results.")
+    print(f"Saved as 'outputs/weekly_assignments/{config['class']}assignments_week{week_num}.csv'")
 
 
     # Ask for user approval to go to schedule calendar events
@@ -178,7 +178,7 @@ def main():
         print("Ok! Good-bye.")
         sys.exit(1)
     else:
-        calendar_events_from_csv(config, state.week_num)
+        calendar_events_from_csv(config, week_num)
 
 
 def calendar_events_from_csv(config, week_num):

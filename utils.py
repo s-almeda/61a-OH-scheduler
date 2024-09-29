@@ -179,6 +179,8 @@ def get_availabilities(sheet_id, range):
             except:
                 # because some of the values are like "1 - I'd love this time", lets grab the first number.
                 row[i] = int(row[i].split(" ")[0]) 
+        #useful for debugging whether we're grabbing the right availabilities sheet or not
+        #print row
     return rows
 
 def create_5x12_np_array(input_list):
