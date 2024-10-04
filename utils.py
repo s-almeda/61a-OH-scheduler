@@ -153,6 +153,7 @@ def get_availabilities(sheet_id, range):
     
     rows = values[1:]
     for row in rows:
+        
         # Let's go through the spreadsheet and convert everything into a number we can actually use
         row[State.StaffMember.TOTAL_WEEKLY_HOURS_INDEX] = int(row[State.StaffMember.TOTAL_WEEKLY_HOURS_INDEX])
         row[State.StaffMember.SEMESTERS_ON_STAFF_INDEX] = int(row[State.StaffMember.SEMESTERS_ON_STAFF_INDEX])
@@ -163,7 +164,7 @@ def get_availabilities(sheet_id, range):
         try:
             row[State.StaffMember.WEEKLY_OH_HOURS_INDEX] = int(row[State.StaffMember.WEEKLY_OH_HOURS_INDEX])
         except:
-            row[State.StaffMember.WEEKLY_OH_HOURS_INDEX] = 3 #default to 3
+            row[State.StaffMember.WEEKLY_OH_HOURS_INDEX] = 4 #default to 4
 
          #GET CONTIGUOUS HOURS
          # sometimes people put a range of contiguous hours and this is not a number therefore the bane of our existence
@@ -172,15 +173,30 @@ def get_availabilities(sheet_id, range):
         except:
             row[State.StaffMember.PREFERRED_CONTIGUOUS_HOURS_INDEX] = 2 #Default to 2
         
-         #GET AVAILABILITIES
+        print(f"{row[0]}: \ntotal weekly hours: {row[State.StaffMember.WEEKLY_OH_HOURS_INDEX]} contiguous hours: {row[State.StaffMember.WEEKLY_OH_HOURS_INDEX]}")
+
+        time = ['9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM', '7PM', '8PM', '9PM']
+        days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+
+
+        #GET AVAILABILITIES
         for i in State.StaffMember.AVAILABILITIES_INDICES:
+
             try:    
                 row[i] = int(row[i])
             except:
                 # because some of the values are like "1 - I'd love this time", lets grab the first number.
                 row[i] = int(row[i].split(" ")[0]) 
-        #useful for debugging whether we're grabbing the right availabilities sheet or not
-        #print row
+
+            #debug
+            # Adjust the index for time and day
+            availability_index = i - 8  # Shift the index to start at 0 for availability
+            hour_index = availability_index % 12  # Get the hour index (0 to 11)
+            day_index = availability_index // 12  # Get the day index (0 to 4)
+
+            # Print time, day, and availability (for debugging)
+            #print(f"{time[hour_index]} {days_of_week[day_index]} Availability: {row[i]}")
+        
     return rows
 
 def create_5x12_np_array(input_list):

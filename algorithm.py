@@ -10,11 +10,11 @@ import time
 done = False
 
 # Defining weights
-U_3_1 = 400
-U_3_2 = 50
-U_3_3 = 700
-U_3_4 = 50
-U_3_5 = 50
+U_3_1 = 400 #Minimize Maximum-Weekly-Hour
+U_3_2 = 50  # 3.2 (w/o QC): Minimize Total Future Hour Violations Per Staff
+U_3_3 = 700 #(w/o QC): Minimize Total # of violations where we've assigned too few people in a slot
+U_3_4 = 100 #Scheduling Assignment Displeasure
+U_3_5 = 50   #consistency constraint
 
 # Weight fxn used in term 3.5 (consistent weekly hours)
 lambda_func = lambda x: np.exp(-0.2 * x)
@@ -79,10 +79,10 @@ def run_algorithm(inputs):
 
     # Define the decision variable
     A = np.empty(shape = (m, n, 5, 12), dtype = object)
-    for i in range(m):
-        for j in range(n):
-            for k in range(5):
-                for l in range(12):
+    for i in range(m): # m TAs?
+        for j in range(n): # OH Demand ?
+            for k in range(5): # 5 days
+                for l in range(12): # 12 hours per ay
                     A[i, j, k, l] = cp.Variable(boolean=True)
 
 
@@ -220,7 +220,7 @@ def run_algorithm(inputs):
 
     obj = cp.Minimize(U_3_1 * term_3_1 + U_3_2 * term_3_2 + U_3_3 * term_3_3 + U_3_4 * term_3_4 + U_3_5 * term_3_5)
 
-     # Stop spinner
+    # Stop loading spinner animation
     done = True
     spinner_thread.join()
 
@@ -229,7 +229,7 @@ def run_algorithm(inputs):
     print(f"Number of constraints: {len(constraints)}")
 
     print("Running algorithm...")
-     # Start spinner for solving
+     # Start loading spinner animation ... 
     done = False
     spinner_thread = threading.Thread(target=loading_spinner, args=("...now solving...this may take a while...",))
     spinner_thread.start()

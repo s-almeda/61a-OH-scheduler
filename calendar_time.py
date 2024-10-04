@@ -4,6 +4,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from datetime import datetime, timedelta
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/calendar']
@@ -70,7 +71,7 @@ def create_event(service, calendar_id, summary, location, description, start_tim
     attendees : list of str
         List of attendee email addresses.
     reminders : dict
-        Dictionary of event reminders to be added.
+        reminder settings
     """
     
     
@@ -87,14 +88,19 @@ def create_event(service, calendar_id, summary, location, description, start_tim
             'timeZone': 'America/Los_Angeles',
         },
         'attendees': [{'email': email} for email in attendees],
-        'reminders': reminders,
+        'reminders': {
+                'useDefault': False,
+                #'overrides': [
+                    #{'method': 'email', 'minutes': 24 * 60},
+                #],
+            }
     }
 
     try:
         event_result = service.events().insert(
             calendarId=calendar_id, 
             body=event,
-            #sendUpdates='all'  # Send email invitations to attendees
+            sendUpdates='all'  # Send email invitations to attendees
         ).execute()
         
         print(f"Event created at {start_time}: {event_result.get('htmlLink')}")
@@ -114,7 +120,10 @@ def main():
         test_calendar = input("Do you want to run a test of the calendar event functionality? (y/n): ").lower()
 
         if test_calendar == 'y':
-            
+            # get tomorrow's date (9-10AM)
+            tomorrow_9 = (datetime.now() + timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0).strftime('%Y-%m-%dT%H:%M:%S-07:00')
+            tomorrow_10 = (datetime.now() + timedelta(days=1)).replace(hour=10, minute=0, second=0, microsecond=0).strftime('%Y-%m-%dT%H:%M:%S-07:00')
+
 
             # Step 2: Ask for an email address to invite to the test event
             email_address = input("Enter an email address you'd like to invite to the test event (e.g. your personal email): ")
@@ -126,14 +135,13 @@ def main():
             summary = "Test Event"
             location = "123 Main St, Anytown, USA"
             description = "This is a test event created using OAuth."
-            start_time = '2024-10-01T09:00:00-07:00'  # Replace with your desired start time
-            end_time = '2024-10-01T10:00:00-07:00'    # Replace with your desired end time
+            start_time = tomorrow_9 
+            end_time = tomorrow_10
             attendees = [email_address]
             reminders = {
                 'useDefault': False,
                 'overrides': [
-                    {'method': 'email', 'minutes': 24 * 60},
-                    {'method': 'popup', 'minutes': 10},
+                    #{'method': 'email', 'minutes': 24 * 60},
                 ],
             }
 

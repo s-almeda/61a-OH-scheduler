@@ -80,6 +80,8 @@ def main():
 
     # Step 3: Fetch and validate availabilities data
     availabilities_id = config_read.get_google_sheets_id(config["availabilities_link"])
+
+    #FYI: this function in utils.py converts the spreadsheet responses into numbers (and handles weird responses, ie when a ta puts "N/A")\/
     availabilities = utils.get_availabilities(availabilities_id, AVAILABILITIES_RANGE)
     validation.validate_availabilities(availabilities)
 
