@@ -151,14 +151,20 @@ def get_availabilities(sheet_id, range):
     if not values:
         raise Exception('No staff availabilities data found.')
     
-    rows = values[1:]
+    rows = values[0:] # change to [1:] if you want to skip the header row
+    rows_dict = {}  # Dictionary to store rows by email, to avoid duplication
+    edited_rows = []  # List to store the final ordered rows without duplicates
+
+    print("pulling staff member availabilities... (using the utils.get_availabilities() function)")
     for row in rows:
-        
+        email = row[0]
+
         # Let's go through the spreadsheet and convert everything into a number we can actually use
         row[State.StaffMember.TOTAL_WEEKLY_HOURS_INDEX] = int(row[State.StaffMember.TOTAL_WEEKLY_HOURS_INDEX])
         row[State.StaffMember.SEMESTERS_ON_STAFF_INDEX] = int(row[State.StaffMember.SEMESTERS_ON_STAFF_INDEX])
         row[State.StaffMember.SEMESTER_AS_AI_INDEX] = int(row[State.StaffMember.SEMESTER_AS_AI_INDEX])
         
+
         #GET WEEKLY OH HOURS
         # some people put weird things in this column like "n/a" which is not a number therefore the bane of our existence
         try:
@@ -173,10 +179,10 @@ def get_availabilities(sheet_id, range):
         except:
             row[State.StaffMember.PREFERRED_CONTIGUOUS_HOURS_INDEX] = 2 #Default to 2
         
-        print(f"{row[0]}: \ntotal weekly hours: {row[State.StaffMember.WEEKLY_OH_HOURS_INDEX]} contiguous hours: {row[State.StaffMember.WEEKLY_OH_HOURS_INDEX]}")
-
-        time = ['9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM', '7PM', '8PM', '9PM']
-        days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
+        
+        # For debugging below...
+        # time = ['9AM', '10AM', '11AM', '12PM', '1PM', '2PM', '3PM', '4PM', '5PM', '6PM', '7PM', '8PM', '9PM']
+        # days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
 
 
         #GET AVAILABILITIES
@@ -188,7 +194,6 @@ def get_availabilities(sheet_id, range):
                 # because some of the values are like "1 - I'd love this time", lets grab the first number.
                 row[i] = int(row[i].split(" ")[0]) 
 
-            #debug
             # Adjust the index for time and day
             availability_index = i - 8  # Shift the index to start at 0 for availability
             hour_index = availability_index % 12  # Get the hour index (0 to 11)
@@ -197,7 +202,28 @@ def get_availabilities(sheet_id, range):
             # Print time, day, and availability (for debugging)
             #print(f"{time[hour_index]} {days_of_week[day_index]} Availability: {row[i]}")
         
-    return rows
+
+        # Check if this data is a duplicate
+        if email in rows_dict:
+            print(f"ALERT: found duplicate for {email}. Replacing previous data with updated availability.")
+            # Replace the previous row in final_rows with the new row
+            for index, existing_row in enumerate(edited_rows):
+                if existing_row[0] == email:
+                    edited_rows[index] = row
+                    break
+        else:
+            # this data is new, not a duplicate. add row to both the dictionary and edited row list
+            rows_dict[email] = row
+            edited_rows.append(row)
+
+
+    # DEBUG:
+    for row in edited_rows:
+        print(f"---------\n{row[0]} \ntotal weekly hours: {row[State.StaffMember.WEEKLY_OH_HOURS_INDEX]} contiguous hours: {row[State.StaffMember.WEEKLY_OH_HOURS_INDEX]}")
+
+    print(f"found data for {len(edited_rows)} staff members -- removed {len(rows) - len(edited_rows)} duplicate(s)\n")
+
+    return edited_rows
 
 def create_5x12_np_array(input_list):
     """
@@ -416,6 +442,7 @@ def deserialize(week_num, weeks_skipped=1, folder_path='outputs/pickles'):
     Returns:
         state: The deserialized state object for week_num.
     """
+    print("deserializing pickle file...")
     # Check each file and only deserialize all states up to and including week_num
     deserialized_objects = [None] * (week_num - weeks_skipped)
 
@@ -439,6 +466,7 @@ def deserialize(week_num, weeks_skipped=1, folder_path='outputs/pickles'):
             deserialized_objects[i+1].prev_state = deserialized_objects[i]
 
     # Return the state object for the current week
+    print("returning deserialized state...")
     return deserialized_objects[-1]
 
 

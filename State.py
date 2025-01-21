@@ -420,7 +420,7 @@ class State:
                     continue
                 if prev.bi_mappings[email] != self.bi_mappings[email]:
                     print(f"Email: {email}. old id {prev.bi_mappings[email]}. new id {self.bi_mappings[email]}")
-                    raise ValueError("bi_mappings do not match up between states. Stop.")
+                    raise ValueError("bi_mappings do not match up between states. Stop. (If you see this error, you may need to rerun scheduling from the beginning of the semester!)")
             prev = prev.prev_state
         
     def serialize(self, folder_path='outputs/pickles', file_name=None):
@@ -450,7 +450,7 @@ class State:
             # Serialize the state object and save it to the specified file
             with open(file_path, 'wb') as file:
                 pickle.dump(self, file)
-            print(f"File saved successfully as {file_path}")
+            print(f"-- Pickle File saved successfully as {file_path} --")
         except Exception as e:
             raise RuntimeError(f"Something went wrong while serializing state #{self.week_num}. Error: {str(e)}")
         finally:

@@ -102,51 +102,70 @@ def run_scheduler(config, demand, availabilities):
             week_num = int(input("Enter the week number you'd like to run the algo on.\n(e.g., enter 5 to schedule for week 5 of the semester): ").strip())
             if week_num <= 0:
                 raise ValueError
-            latest_week = week_num - 1
+            
             break
         except ValueError:
             print("Invalid input, please enter a positive integer for the week number.")
+    #check if we should rerun everything from the beginning
+    while True:
+        try:
+            choice = input("Should we rerun everything from the beginning of the semester? (y/n): ").strip()
+            if choice == 'y':
+                latest_week = 0
+                break
+            if choice == 'n':
+                print("Running just this week...")
+                latest_week = week_num - 1
+                break
+        except ValueError:
+            print("Invalid input.")
 
 
+    while (latest_week < week_num):
+        if (latest_week- config["weeks_skipped"]) > 0:
+            print("looking for state for previous week: ", latest_week)
+            last_state = utils.deserialize(latest_week, config["weeks_skipped"], folder_path=f'outputs/pickles/{config["class"]}')
+        else:
+            last_state = None
+        
+        if last_state and last_state.week_num == config["weeks"]:
+            print(f"ERROR: The algorithm has already been run for all weeks. The last state was for week {config['weeks']}. Exiting.")
+            return
+        if latest_week == config['weeks']:
+            raise RuntimeError("Allotted # of weeks have already passed. Exiting.")
 
-    if (latest_week- config["weeks_skipped"]) > 0:
-         print("looking for state for previous week: ", latest_week)
-         last_state = utils.deserialize(latest_week, config["weeks_skipped"], folder_path=f'outputs/pickles/{config["class"]}')
-    else:
-        last_state = None
     
-    if last_state and last_state.week_num == config["weeks"]:
-        print(f"ERROR: The algorithm has already been run for all weeks. The last state was for week {config['weeks']}. Exiting.")
-        return
-    if latest_week == config['weeks']:
-        raise RuntimeError("Allotted # of weeks have already passed. Exiting.")
+        # Create new state object
+        state = State.State(last_state, 
+                            demand, 
+                            availabilities, 
+                            config["class"], 
+                            config["semester"], 
+                            config["weeks"], 
+                            config["weekly_hour_multiplier"], 
+                            config["weeks_skipped"])
+        
+        # Run algorithm
+        inputs = state.get_algo_inputs()
+        assignments = algorithm.run_algorithm(inputs)
+        # \assignments = np.load("assignments.npy")[:, 0, :, :]
 
-    # Create new state object
-    state = State.State(last_state, 
-                        demand, 
-                        availabilities, 
-                        config["class"], 
-                        config["semester"], 
-                        config["weeks"], 
-                        config["weekly_hour_multiplier"], 
-                        config["weeks_skipped"])
-    
-    # Run algorithm
-    inputs = state.get_algo_inputs()
-    assignments = algorithm.run_algorithm(inputs)
-    # \assignments = np.load("assignments.npy")[:, 0, :, :]
+        np.save('demand.npy', demand)
 
-    np.save('demand.npy', demand)
+        state.set_assignments(assignments)
+        
+        state.serialize(folder_path=f'outputs/pickles/{config["class"]}') #save the current state as a pickle in appropriate folder
+        latest_week += 1
 
-    state.set_assignments(assignments)
-
-    # Create CSV export of the next week's assignments
+    # Create CSV export of that next week's assignments
     export_dict = {"email": [], "sum_assignments": []}
     for i in range(assignments.shape[0]):
         if assignments[i].sum() != 0:
-
-            export_dict['email'].append(state.bi_mappings.inverse[i])
-            export_dict['sum_assignments'].append(assignments[i].sum())
+            email = state.bi_mappings.inverse[i]
+            num_hours = assignments[i].sum()
+            export_dict['email'].append(email)
+            export_dict['sum_assignments'].append(num_hours)
+            print(f"assigned {email.split('@')[0]}: {int(num_hours)} hours")
 
     export_df = pd.DataFrame(data=export_dict)
     export_df.to_csv(f"outputs/{config['class']}sum_assignments_week{week_num}.csv", index=False)
@@ -175,7 +194,7 @@ def run_scheduler(config, demand, availabilities):
     export_df_weekly = pd.DataFrame(data=export_dict_weekly, index=hours_of_day)
     export_df_weekly.to_csv(f"outputs/weekly_assignments/{config['class']}assignments_week{week_num}.csv", index=True, index_label="Hour")
 
-    state.serialize(folder_path=f'outputs/pickles/{config["class"]}') #save the current state as a pickle in appropriate folder
+   
     print("\n\033[1m[ ---- Done! ---- ]\033[0m\n") 
     print(f"Saved as 'outputs/weekly_assignments/{config['class']}assignments_week{week_num}.csv'")
 
@@ -226,10 +245,19 @@ def calendar_events_from_csv(config, week_num):
     if not os.path.exists(csv_name):
         print(f"ERROR: CSV file {csv_name} not found. Please generate the CSV file and try again.")
         sys.exit(1)
-    
 
+    fixed_TAs_csv = config['fixed_tas']
 
-    assignments = parse_assignments_from_csv(csv_name, config, week_num)
+    fixed_TAs = False
+
+    # Check if the fixed_tas CSV file exists
+    if os.path.exists(fixed_TAs_csv):
+        print(f"Found {fixed_TAs_csv}. \n Should we include fixed TAs in the calendar events?")
+        choice = input("Enter your choice (y or n): ").strip()
+        if choice == 'y':
+            fixed_TAs = True
+
+    assignments = parse_assignments_from_csv(csv_name, config, week_num, fixed_tas=fixed_TAs)
     num_assignments = len(assignments)
 
     # ---- Check 1: Double-check with the user that this all looks correct ... ---#
@@ -301,12 +329,19 @@ def calendar_events_from_csv(config, week_num):
             continue
 
         # Convert start and end times to the required format: YYYY-MM-DDTHH:MM:SS.MMMZ
-        start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%dT%H:%M:00-07:00")
-        end_time = datetime.strptime(end_time, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%dT%H:%M:00-07:00")
+        start_time = datetime.strptime(start_time, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%dT%H:%M:00-08:00")
+        end_time = datetime.strptime(end_time, "%Y-%m-%dT%H:%M").strftime("%Y-%m-%dT%H:%M:00-08:00")
         
         # Set up event details
         summary = config['calendar_event_name']
         location = config['calendar_event_location']
+
+        # ****  hardcoding thursday events to be in Warren 111 !!  ****
+        day_of_week = datetime.weekday(datetime.strptime(start_time,  "%Y-%m-%dT%H:%M:00-08:00"))
+        print(day_of_week)
+        if day_of_week == '3':
+            location = "Warren 111"
+
         description = config['calendar_event_description']
         
         # Define the reminders for the event
@@ -345,50 +380,57 @@ def calendar_events_from_csv(config, week_num):
 
 
 
-def parse_assignments_from_csv(csv_name, config, week_num):
+def parse_assignments_from_csv(csv_name, config, week_num, fixed_tas=False):
     """
     Parses TA assignments from a CSV file and returns a list of assignments.
-
+    
     Parameters:
     ----------
     csv_name : str
         Path to the CSV file containing TA assignments.
     config : dict
-        Configuration containing the start date of the semester.
+        Configuration containing the start date of the semester and other settings.
     week_num : int
         The week number for which assignments are being parsed.
+    fixed_tas : bool
+        Flag indicating whether to include fixed TAs from an additional CSV file.
 
     Returns:
     --------
     list of dict
         A list where each dictionary represents an assignment with the following keys:
-        - 'start_time' : str (formatted as '%Y-%m-%dT%H:%M') (note that there's no %S for seconds)
+        - 'start_time' : str (formatted as '%Y-%m-%dT%H:%M')
         - 'end_time' : str (formatted as '%Y-%m-%dT%H:%M')
         - 'attendees' : list of str (TA email addresses)
-
-    Process:
-    --------
-    - Calculates the date for each day of the specified week.
-    - Reads the CSV and extracts attendees for each hour and day.
-    - Creates a list of assignments with start/end times and attendee emails.
     """
 
     assignments = []
-    
+
     # Parse the start date of the semester and calculate the start date for the given week
     start_date = datetime.strptime(config["start_date"], "%Y-%m-%d")
+    monday_of_week = start_date + timedelta(weeks=week_num - 1 - int(config["weeks_skipped"]))
 
-    monday_of_week = start_date + timedelta(weeks=week_num - 1-int(config["weeks_skipped"]))
-
-    
     # Map column headers (days of the week) to their corresponding date for this week
     days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
     day_to_date = {day: monday_of_week + timedelta(days=i) for i, day in enumerate(days_of_week)}
-    
-    # Open and read the CSV file
+
+    # Read the fixed TA assignments if the flag is set
+    fixed_ta_assignments = {}
+    if fixed_tas:
+        with open(config["fixed_tas"], newline='') as fixed_ta_file:
+            fixed_reader = csv.DictReader(fixed_ta_file)
+            for row in fixed_reader:
+                hour = row["Hour"]
+                for day in days_of_week:
+                    if row[day]:
+                        if (hour, day) not in fixed_ta_assignments:
+                            fixed_ta_assignments[(hour, day)] = []
+                        fixed_ta_assignments[(hour, day)].extend(email.strip() for email in row[day].split(","))
+
+    # Open and read the main CSV file
     with open(csv_name, newline='') as csvfile:
         reader = csv.DictReader(csvfile)
-        
+
         # Iterate over each row (hourly time slots)
         for row in reader:
             hour = row["Hour"]  # Extract the hour from the "Hour" column
@@ -396,9 +438,13 @@ def parse_assignments_from_csv(csv_name, config, week_num):
             # Iterate over the days of the week
             for day in days_of_week:
                 attendees_str = row[day]  # Get the list of attendees (if any) for this day and hour
-                if attendees_str:  # If there are attendees listed for this time slot
-                    attendees = [email.strip() for email in attendees_str.split(",")]
+                attendees = [email.strip() for email in attendees_str.split(",") if attendees_str]
 
+                # Check and add fixed TA emails if applicable
+                if fixed_tas and (hour, day) in fixed_ta_assignments:
+                    attendees.extend(fixed_ta_assignments[(hour, day)])
+
+                if attendees:  # If there are attendees listed for this time slot
                     # Calculate the start and end times for the assignment
                     start_time_str = f"{day_to_date[day].strftime('%Y-%m-%d')}T{hour}:00"
                     start_time = datetime.strptime(start_time_str, "%Y-%m-%dT%H:%M:%S")
@@ -408,10 +454,10 @@ def parse_assignments_from_csv(csv_name, config, week_num):
                     assignment = {
                         "start_time": start_time.strftime('%Y-%m-%dT%H:%M'),
                         "end_time": end_time.strftime('%Y-%m-%dT%H:%M'),
-                        "attendees": attendees
+                        "attendees": list(set(attendees))  # Remove duplicates
                     }
                     assignments.append(assignment)
-    
+
     return assignments
 
 

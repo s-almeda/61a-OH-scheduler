@@ -13,7 +13,7 @@ done = False
 U_3_1 = 400 #Minimize Maximum-Weekly-Hour
 U_3_2 = 50  # 3.2 (w/o QC): Minimize Total Future Hour Violations Per Staff
 U_3_3 = 700 #(w/o QC): Minimize Total # of violations where we've assigned too few people in a slot
-U_3_4 = 100 #Scheduling Assignment Displeasure
+U_3_4 = 50 #Scheduling Assignment Displeasure
 U_3_5 = 50   #consistency constraint
 
 # Weight fxn used in term 3.5 (consistent weekly hours)

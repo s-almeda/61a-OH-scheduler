@@ -14,5 +14,6 @@
     "calendar_event_name": "DATAC88C OH",
     "calendar_event_location": "Warren 101b",
     "calendar_event_description": "Office hours",
+    "fixed_tas": "outputs/weekly_assignments/88C_FIXED_TAs.csv",
     "calendar_id": "c_dd1b34e8fe66665adaa898825ba2ce784febefadbcd53c4a45d369c3628147b1@group.calendar.google.com"
 }

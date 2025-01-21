@@ -14,5 +14,6 @@
     "calendar_event_name": "CS61A OH",
     "calendar_event_location": "Warren 101b",
     "calendar_event_description": "Office hours",
+    "fixed_tas": "outputs/weekly_assignments/61A_FIXED_TAs.csv",
     "calendar_id": "c_469c71282a8929c3a9fc380d736bf9bae74bcdbe0cc0cb74f24fc7dda5acfe3f@group.calendar.google.com"
 }
